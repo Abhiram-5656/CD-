@@ -1,27 +1,32 @@
 #!/bin/bash
 
-WATCH_DIR=$(pwd)  # Automatically detects the current directory
-SCRIPT_NAME=$(basename "$0")  # Get the script's filename
+WATCH_DIR=$(pwd)  # Monitor the current directory
+SCRIPT_NAME=$(basename "$0")  # Get the script filename
 
 cd "$WATCH_DIR" || exit
 
-while true; do
-    # Check for file changes, including the script itself
-    if ! git diff --quiet || ! git diff --cached --quiet || ! git ls-files --others --exclude-standard --quiet; then
-        echo "Changes detected, committing..."
+echo "🔄 Monitoring directory: $WATCH_DIR for changes..."
 
-        # Add all changes, including the script
+while true; do
+    # Check if any file has been modified, added, or deleted
+    if ! git diff --quiet || ! git diff --cached --quiet || ! git ls-files --others --exclude-standard --quiet; then
+        echo "📢 Changes detected!"
+
+        # Add all changes to the staging area
         git add .
 
-        # If the script itself is modified, add a special commit message
+        # Create a commit message with timestamp
+        COMMIT_MESSAGE="Auto-commit: $(date +"%Y-%m-%d %H:%M:%S")"
+
+        # Check if the script itself was modified
         if git diff --name-only | grep -q "$SCRIPT_NAME"; then
-            git commit -m "Auto-commit (script updated): $(date +"%Y-%m-%d %H:%M:%S")"
-        else
-            git commit -m "Auto-commit: $(date +"%Y-%m-%d %H:%M:%S")"
+            COMMIT_MESSAGE="Auto-commit (script updated): $(date +"%Y-%m-%d %H:%M:%S")"
         fi
 
-        # (Optional) Push changes
-        git push origin main
+        # Commit the changes
+        git commit -m "$COMMIT_MESSAGE"
+
+        echo "✅ Changes automatically staged and committed to Git."
     fi
 
     # Wait for 10 seconds before checking again
